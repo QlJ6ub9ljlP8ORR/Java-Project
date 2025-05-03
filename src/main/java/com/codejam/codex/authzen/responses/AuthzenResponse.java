@@ -6,18 +6,20 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Generic response wrapper for API responses.
+ *
+ * @param <T> the type of the response body content
+ */
 @Getter
+@Setter
 public class AuthzenResponse<T> {
 
     private static final String SUCCESSFUL = "successful";
     private static final String UNSUCCESSFUL = "unsuccessful";
 
     private String status;
-
-    @Setter
     private List<T> results;
-
-    @Setter
     private String message;
 
     /**
@@ -29,9 +31,9 @@ public class AuthzenResponse<T> {
     }
 
     /**
-     * Constructor that initializes with a provided data object.
+     * Constructor that initializes with a single result object.
      *
-     * @param data The data object to include in the results.
+     * @param data The single data object to include in the results.
      */
     public AuthzenResponse(T data) {
         this();
@@ -39,11 +41,11 @@ public class AuthzenResponse<T> {
     }
 
     /**
-     * Constructor that initializes with a status and a message.
+     * Constructor that initializes with a list of results, a success flag, and a message.
      *
-     * @param results The list of results to return.
+     * @param results   The list of results to include.
      * @param successful Whether the operation was successful or not.
-     * @param message The message to include with the response.
+     * @param message   The message to include with the response.
      */
     public AuthzenResponse(List<T> results, boolean successful, String message) {
         this.status = successful ? SUCCESSFUL : UNSUCCESSFUL;
@@ -56,9 +58,12 @@ public class AuthzenResponse<T> {
      *
      * @param data The data object to add to the results.
      */
-    private void addResult(T data) {
+    public void addResult(T data) {
         if (data != null) {
-            results.add(data);
+            if (this.results == null) {
+                this.results = new ArrayList<>();
+            }
+            this.results.add(data);
         }
     }
 
@@ -69,6 +74,9 @@ public class AuthzenResponse<T> {
      */
     public void addResults(List<T> data) {
         if (data != null) {
+            if (this.results == null) {
+                this.results = new ArrayList<>();
+            }
             this.results.addAll(data);
         }
     }
