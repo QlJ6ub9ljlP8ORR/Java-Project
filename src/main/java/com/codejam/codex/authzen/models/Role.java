@@ -27,8 +27,10 @@ public class Role {
     private String description;
 
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
+    @Builder.Default
     private Set<UserRole> userRoles = new HashSet<>();
 
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
+    @Builder.Default
     private Set<RolePermission> rolePermissions = new HashSet<>();
 }

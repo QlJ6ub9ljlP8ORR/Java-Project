@@ -1,24 +1,25 @@
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME}
+    name: authzen
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:mysql://localhost:3306/authzen?createDatabaseIfNotExist=true
+    username: root
+    password: root
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
   security:
     user:
-      name:  ${ADMIN_USERNAME}
-      password:  ${ADMIN_PASSWORD}
+      name: admin
+      password: admin123
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password
     protocol: smtp
     tls: true
     properties:
@@ -33,28 +34,27 @@ spring:
       static-locations: classpath:/static/
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: this-is-a-very-long-secret-key-that-is-at-least-32-bytes-long
   access-token:
-    expiry-ms: ${JWT_ACCESS_EXPIRATION}
+    expiry-ms: 86400000
   refresh-token:
-    expiry-ms: ${JWT_REFRESH_EXPIRATION}
+    expiry-ms: 604800000
 
 server:
-  port: ${SERVER_PORT}
+  port: 8081
 
 email:
-  from: ${EMAIL_FROM}
+  from: your-email@gmail.com
 
 github:
-  client-id: ${GITHUB_CLIENT_ID}
-  client-secret: ${GITHUB_CLIENT_SECRET}
-  redirect-uri: ${GITHUB_REDIRECT_URI}
+  client-id: v23li0yx2HTcAAbJlWN
+  client-secret: 7b670e52157b26d4573f4edcdb0df9ccab21704f
+  redirect-uri: http://localhost:8081/oauth2/callback/github
 
 admin:
-  email: ${ADMIN_EMAIL}
-  username: ${ADMIN_USERNAME}
-  password: ${ADMIN_PASSWORD}
-
+  email: admin@example.com
+  username: admin
+  password: admin123
 
 springdoc:
   api-docs:
