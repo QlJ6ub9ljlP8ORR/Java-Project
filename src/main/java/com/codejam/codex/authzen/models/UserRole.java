@@ -2,7 +2,6 @@ package com.codejam.codex.authzen.models;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.HashSet;
 import java.util.Set;
 
