@@ -7,11 +7,11 @@ import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.endpoint.AuthEndpoint;
 import com.codejam.codex.authzen.endpoint.UserEndpoint;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +27,6 @@ public class UserController {
     private final AuthEndpoint authEndpoint;
     private final UserEndpoint userEndpoint;
 
-    @Autowired
     public UserController(AuthEndpoint authEndpoint, UserEndpoint userEndpoint) {
         this.authEndpoint = authEndpoint;
         this.userEndpoint = userEndpoint;
@@ -41,7 +40,6 @@ public class UserController {
      */
     @PreAuthorize("hasAuthority('VIEW_USER')")
     @GetMapping(ApiEndpoint.AUTH_ME)
-    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<UserResponse>> getProfile(HttpServletRequest request) {
         if (!authEndpoint.isAuthenticated(request)) {
             AuthzenResponse<UserResponse> response = new AuthzenResponse<>(null, false, "Unauthorized: Invalid or missing token");
@@ -60,7 +58,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
     /**
      * Updates the authenticated user's profile.
      *
@@ -70,19 +67,22 @@ public class UserController {
      */
     @PreAuthorize("hasAuthority('UPDATE_USER')")
     @PutMapping(ApiEndpoint.AUTH_UPDATE)
-    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<UpdateUserResponse>> updateProfile(
             HttpServletRequest request,
-            @RequestBody UpdateUserRequest updateRequest
+            @Valid @RequestBody UpdateUserRequest updateRequest
     ) {
         if (!authEndpoint.isAuthenticated(request)) {
-            AuthzenResponse<UpdateUserResponse> response = new AuthzenResponse<>(null, false, "Unauthorized");
+            AuthzenResponse<UpdateUserResponse> response = new AuthzenResponse<>(null, false, "Unauthorized: Invalid or missing token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String username = authEndpoint.getUsername(request);
-        UpdateUserResponse updateUserResponse = userEndpoint.updateUser(username, updateRequest);
+        if (username == null) {
+            AuthzenResponse<UpdateUserResponse> response = new AuthzenResponse<>(null, false, "Unauthorized: Cannot extract username");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
+        UpdateUserResponse updateUserResponse = userEndpoint.updateUser(username, updateRequest);
         AuthzenResponse<UpdateUserResponse> response = new AuthzenResponse<>(updateUserResponse);
         response.setMessage("User updated successfully");
         return ResponseEntity.ok(response);
@@ -97,10 +97,9 @@ public class UserController {
      */
     @PreAuthorize("hasAuthority('USER_LOGOUT')")
     @PostMapping(ApiEndpoint.AUTH_LOGOUT)
-    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<Object>> logout(HttpServletRequest request) {
         if (!authEndpoint.isAuthenticated(request)) {
-            AuthzenResponse<Object> response = new AuthzenResponse<>(null, false, "Unauthorized");
+            AuthzenResponse<Object> response = new AuthzenResponse<>(null, false, "Unauthorized: Invalid or missing token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
@@ -115,7 +114,4 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
-
 }
