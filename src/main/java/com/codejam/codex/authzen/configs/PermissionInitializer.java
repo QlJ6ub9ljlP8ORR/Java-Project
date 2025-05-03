@@ -29,55 +29,69 @@ public class PermissionInitializer {
             RolePermissionRepository rolePermissionRepository
     ) {
         return args -> {
-            logger.info("Initializing permissions...");
+            try{
+                logger.info("Initializing permissions...");
 
-            List<Permission> defaultPermissions = getDefaultPermissions();
-            List<Permission> userPermissions = getUserPermissions();
+                List<Permission> defaultPermissions = getDefaultPermissions();
+                List<Permission> userPermissions = getUserPermissions();
 
-            for (Permission permission : defaultPermissions) {
-                permissionRepository.findByName(permission.getName()).orElseGet(() -> {
-                    logger.info("Creating permission: {}", permission.getName());
-                    return permissionRepository.save(permission);
-                });
-            }
-
-            // === ROLE_ADMIN setup ===
-            Role adminRole = roleRepository.findByNameWithPermissions("ROLE_ADMIN")
-                    .orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found"));
-
-            logger.info("Assigning missing permissions to ROLE_ADMIN...");
-            for (Permission permission : defaultPermissions) {
-                if (adminRole.getRolePermissions().stream()
-                        .noneMatch(rp -> rp.getPermission().getName().equals(permission.getName()))) {
-
-                    RolePermission rp = RolePermission.builder()
-                            .role(adminRole)
-                            .permission(permissionRepository.findByName(permission.getName()).orElseThrow())
-                            .build();
-                    rolePermissionRepository.save(rp);
-                    logger.info("Assigned '{}' to ROLE_ADMIN", permission.getName());
+                for (Permission permission : defaultPermissions) {
+                    permissionRepository.findByName(permission.getName()).orElseGet(() -> {
+                        logger.info("Creating permission: {}", permission.getName());
+                        return permissionRepository.save(permission);
+                    });
                 }
-            }
 
-            // === ROLE_USER setup ===
-            Role userRole = roleRepository.findByNameWithPermissions("ROLE_USER")
-                    .orElseThrow(() -> new IllegalStateException("ROLE_USER not found"));
+                // === ROLE_ADMIN setup ===
+                Role adminRole = roleRepository.findByNameWithPermissions("ROLE_ADMIN")
+                        .orElseGet(() -> {
+                            logger.warn("ROLE_ADMIN not found. Creating default ROLE_ADMIN...");
+                            Role newAdminRole = Role.builder().name("ROLE_ADMIN").build();
+                            return roleRepository.save(newAdminRole);
+                        });
 
-            logger.info("Assigning relevant permissions to ROLE_USER...");
-            for (Permission permission : userPermissions) {
-                if (userRole.getRolePermissions().stream()
-                        .noneMatch(rp -> rp.getPermission().getName().equals(permission.getName()))) {
+                logger.info("Assigning missing permissions to ROLE_ADMIN...");
+                for (Permission permission : defaultPermissions) {
+                    if (adminRole.getRolePermissions().stream()
+                            .noneMatch(rp -> rp.getPermission().getName().equals(permission.getName()))) {
 
-                    RolePermission rp = RolePermission.builder()
-                            .role(userRole)
-                            .permission(permissionRepository.findByName(permission.getName()).orElseThrow())
-                            .build();
-                    rolePermissionRepository.save(rp);
-                    logger.info("Assigned '{}' to ROLE_USER", permission.getName());
+                        RolePermission rp = RolePermission.builder()
+                                .role(adminRole)
+                                .permission(permissionRepository.findByName(permission.getName()).orElseThrow())
+                                .build();
+                        rolePermissionRepository.save(rp);
+                        logger.info("Assigned '{}' to ROLE_ADMIN", permission.getName());
+                    }
                 }
-            }
 
-            logger.info("Permission initialization complete.");
+                // === ROLE_USER setup ===
+                Role userRole = roleRepository.findByNameWithPermissions("ROLE_USER")
+                        .orElseGet(() -> {
+                            logger.warn("ROLE_USER not found. Creating default ROLE_USER...");
+                            Role newUserRole = Role.builder().name("ROLE_USER").build();
+                            return roleRepository.save(newUserRole);
+                        });
+
+                logger.info("Assigning relevant permissions to ROLE_USER...");
+                for (Permission permission : userPermissions) {
+                    if (userRole.getRolePermissions().stream()
+                            .noneMatch(rp -> rp.getPermission().getName().equals(permission.getName()))) {
+
+                        RolePermission rp = RolePermission.builder()
+                                .role(userRole)
+                                .permission(permissionRepository.findByName(permission.getName()).orElseThrow())
+                                .build();
+                        rolePermissionRepository.save(rp);
+                        logger.info("Assigned '{}' to ROLE_USER", permission.getName());
+                    }
+                }
+
+                logger.info("Permission initialization complete.");
+                } 
+            catch (Exception e) {
+                logger.error("Error during permission initialization", e);
+                throw e; // Ensure transaction rollback
+            }
         };
     }
 
